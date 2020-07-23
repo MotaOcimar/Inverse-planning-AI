@@ -2,6 +2,7 @@ import numpy as np
 import random
 from math import inf, sqrt
 
+# 100% do Manga
 
 class CostMap(object):
     """

@@ -80,6 +80,7 @@ def generate_input_data(num_iterations, remaining):
 
 
 # TODO: Relocate/reuse the codes below:
+# Daqui para baixo, codigo do Manga
 
 # Select planning algorithm
 # algorithm = 'dijkstra'

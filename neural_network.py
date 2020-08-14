@@ -15,13 +15,13 @@ def inverse_planning_model(width, height, output_len):
     lambda_l2 = 0
 
     # 1
-    model.add(layers.Dense(units=84,kernel_regularizer=regularizers.l2(lambda_l2), activation=activation_func,  input_shape=(width, height, 1)))
+    model.add(layers.Dense(units=84,kernel_regularizer=regularizers.l2(lambda_l2), activation=activation_func,  input_shape=( height, width)))
 
 
-    model.add(layers.Dense(units=84, activation=activation_func), kernel_regularizer=regularizers.l2(lambda_l2))
+    model.add(layers.Dense(units=84, activation=activation_func, kernel_regularizer=regularizers.l2(lambda_l2)))
 
     # 4
-    model.add(layers.Dense(units=output_len, activation=activations.softmax), kernel_regularizer=regularizers.l2(lambda_l2))
+    model.add(layers.Dense(units=output_len, activation=activations.softmax, kernel_regularizer=regularizers.l2(lambda_l2)))
 
     # Para criar covolucao 2D
     # model.add(layers.Conv2D(filters=nf, kernel_size=(fx, fy), strides=(sx, sy), activation=activations.fun))

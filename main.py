@@ -6,25 +6,27 @@ from tensorflow import keras
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import TensorBoard
-from lenet5 import make_lenet5
-from utils import read_mnist, save_model_to_json
+from utils import save_model_to_json
+import numpy as np
 
-from monte_carlo import generate_input_data
-from neural_network import inverse_planning_model
+from neural_network import *
 import matplotlib.pyplot as plt
 from data_generator import DataGenerator
 # from neural_network import inverse_planning_model
 
-
-num_iterations = 1
+num_epochs = 10000
+num_iterations = 100
 remaining = 0.8
 data_generator = DataGenerator()
 nn_input, nn_output = data_generator.generate_data(num_iterations, remaining)
+nn_input = np.array(nn_input)
+nn_output = np.array(nn_output)
 
-for i in range(num_iterations*3):
-    plt.matshow(nn_input[i])
-    plt.plot(nn_output[i][1], nn_output[i][0], 'rx', markersize=8)
-    plt.show()
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+# for i in range(num_iterations*3):
+#     plt.matshow(nn_input[i])
+#     plt.plot(nn_output[i][1], nn_output[i][0], 'rx', markersize=8)
+#     plt.show()
 
 # model = inverse_planning_model()
 # model.compile(loss=keras.losses.categorical_crossentropy, optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
@@ -33,9 +35,23 @@ for i in range(num_iterations*3):
 
 def train():
     # treina a NN usando os dados  gerados por Monte Carlo
-    pass
+    height = len(nn_input[0])
+    width = len(nn_input[0][0])
+    output_len = len(nn_output)
+    model = inverse_planning_model( height = height, width = width, output_len = output_len)
+    model.summary()
+
+    model.compile(loss=keras.losses.categorical_crossentropy,
+              optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
+    
+    history = model.fit(nn_input, nn_output,
+                    batch_size=(len(nn_input)), epochs=num_epochs)
+    save_model_to_json(model, 'inverse_planning_model')
 
 
 def evaluate():
     # Avalia o resultado obtido pela NN comparando com os objetivos reais dos agentes
     pass
+
+if __name__ == "__main__":
+    train()

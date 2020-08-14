@@ -2,7 +2,8 @@ import numpy as np
 import random
 from math import inf, sqrt
 
-# 100% do Manga
+# 100% Manga's code
+
 
 class CostMap(object):
     """
@@ -94,7 +95,7 @@ class CostMap(object):
         :param rectangle: a rectangle defined as (x, y, width, height), where (x, y) is the top left corner.
         :type rectangle: 4-dimensional tuple.
         """
-        self.add_rectangle((rectangle[0] - 1, rectangle[1] - 1, rectangle[2] + 2, rectangle[3] + 2), 2.0)
+        # self.add_rectangle((rectangle[0] - 1, rectangle[1] - 1, rectangle[2] + 2, rectangle[3] + 2), 2.0)
         self.add_rectangle(rectangle, -1.0)
 
     def add_rectangle(self, rectangle, value):

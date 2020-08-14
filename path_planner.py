@@ -2,7 +2,8 @@ from grid import Node, NodeGrid
 from math import inf
 import heapq
 
-# Respostas do lab02
+# CT-213 lab02' answer
+
 
 class PathPlanner(object):
     """

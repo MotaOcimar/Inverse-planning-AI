@@ -48,15 +48,15 @@ def inverse_planning_model_simpleLenet5(width, height, output_len):
 
     # 1
     model.add(layers.Conv2D( kernel_size=(5, 5), kernel_regularizer=regularizers.l2(lambda_l2),
-                            strides=(1, 1), activation=activation_func,  input_shape=(width, height, 1)))
+                            strides=(1, 1), activation=activation_func,  input_shape=(height, width)))
     # 2
     model.add(layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
     # 3
     model.add(layers.Flatten())
 
-    model.add(layers.Dense(units=84, activation=activation_func), kernel_regularizer=regularizers.l2(lambda_l2))
-    model.add(layers.Dense(units=84, activation=activation_func), kernel_regularizer=regularizers.l2(lambda_l2))
+    model.add(layers.Dense(units=84, activation=activation_func, kernel_regularizer=regularizers.l2(lambda_l2)))
+    model.add(layers.Dense(units=84, activation=activation_func, kernel_regularizer=regularizers.l2(lambda_l2)))
 
     # 4
     model.add(layers.Dense(units=output_len, activation=activations.softmax), kernel_regularizer=regularizers.l2(lambda_l2))
@@ -86,7 +86,7 @@ def inverse_planning_model_Lenet5(width, height, output_len):
 
     # 1
     model.add(layers.Conv2D(filters=6, kernel_size=(5, 5), kernel_regularizer=regularizers.l2(lambda_l2),
-                            strides=(1, 1), activation=activation_func,  input_shape=(width, height, 1)))
+                            strides=(1, 1), activation=activation_func,  input_shape=( height, width, 1)))
     # 2
     model.add(layers.AveragePooling2D(pool_size=(2, 2), strides=(2, 2)))
 
@@ -103,10 +103,10 @@ def inverse_planning_model_Lenet5(width, height, output_len):
 
     # 6
     model.add(layers.Flatten())
-    model.add(layers.Dense(units=84, activation=activation_func), kernel_regularizer=regularizers.l2(lambda_l2))
+    model.add(layers.Dense(units=84, activation=activation_func, kernel_regularizer=regularizers.l2(lambda_l2)))
 
     # 7
-    model.add(layers.Dense(units=output_len, activation=activations.softmax), kernel_regularizer=regularizers.l2(lambda_l2))
+    model.add(layers.Dense(units=output_len, activation=activations.softmax, kernel_regularizer=regularizers.l2(lambda_l2)))
     # Para criar covolucao 2D
     # model.add(layers.Conv2D(filters=nf, kernel_size=(fx, fy), strides=(sx, sy), activation=activations.fun))
 

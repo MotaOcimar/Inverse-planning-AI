@@ -38,7 +38,7 @@ def train():
     height = len(nn_input[0])
     width = len(nn_input[0][0])
     output_len = len(nn_output)
-    model = inverse_planning_model( height = height, width = width, output_len = output_len)
+    model = inverse_planning_model( width = width, height = height, output_len = output_len)
     model.summary()
 
     model.compile(loss=keras.losses.categorical_crossentropy,

@@ -7,78 +7,113 @@ import random
 import time
 
 # TODO: Adjust this file to define callable methods that provides the input data of the neural network
-# TODO: Save maps and path in just one matrix
 
 
-def generate_paths(num_iterations):
-    """
-    Run the path planners in num_iterations different maps
+class MonteCarlo:
+    def __init__(self, width=160, height=120, obstacle_width=20, obstacle_height=15, num_obstacles=20):
 
-    :param num_iterations: number of different maps to be created
-    :type num_iterations: Integer
-    :return: Three lists of paths, each one as a sequence of (x, y) positions: [(x1,y1),(x2,y2),(x3,y3),...,(xn,yn)].
-    :rtype: List of list of tuples.
-    """
-    # TODO
-    dijkstra_paths = []
-    greedy_paths = []
-    a_star_paths = []
-    return dijkstra_paths, greedy_paths, a_star_paths
+        self.width = width
+        self.height = height
+        self.obstacle_width = obstacle_width
+        self.obstacle_height = obstacle_height
+        self.num_obstacles = num_obstacles
 
+    def cut_path(self, path, remaining):
+        """
+        Removes information from the end of the planned path
 
-def merge_paths(dijkstra_paths, greedy_paths, a_star_paths):
-    """
-    Randomly merges the lists of paths to provide an unbiased list of paths
+        :param path: Sequence of (x, y) positions: [(x1,y1),(x2,y2),(x3,y3),...,(xn,yn)].
+        :type path: List of tuples.
+        :param remaining: How much of the path will remain
+        :type remaining: float
+        :return: Partial path
+        :rtype: List of tuples.
+        """
+        # TODO
+        partial_path = path
+        return partial_path
 
-    :param dijkstra_paths: lists of paths, each one as a sequence of (x, y) positions: [(x1,y1),(x2,y2),(x3,y3),...,(xn,yn)].
-    :type dijkstra_paths: List of list of tuples
-    :param greedy_paths: lists of paths, each one as a sequence of (x, y) positions: [(x1,y1),(x2,y2),(x3,y3),...,(xn,yn)].
-    :type greedy_paths: List of list of tuples
-    :param a_star_paths: lists of paths, each one as a sequence of (x, y) positions: [(x1,y1),(x2,y2),(x3,y3),...,(xn,yn)].
-    :type a_star_paths: List of list of tuples
-    :return: a single list of randomly ordered paths
-    :rtype: List of list of tuples.
-    """
-    # TODO
-    paths = []
-    return paths
+    def write_path_on_map(self, path, cost_map):
+        """
+        Write the path on the cost map: obstacle (-1), free (1), path (0)
+        """
+        # TODO
+        map_with_path = cost_map
+        return map_with_path
 
+    def generate_paths(self, cost_map):
+        problem_valid = False
 
-def cut_paths(paths, remaining):
-    """
-    Removes information from the end of the planned path
+        while not problem_valid:
+            # Trying to generate a new problem
+            start_position = (random.randint(0, self.height - 1), random.randint(0, self.width - 1))
+            goal_position = (random.randint(0, self.height - 1), random.randint(0, self.width - 1))
+            # If the start or goal positions happen to be within an obstacle, we discard them and
+            # try new samples
+            if cost_map.is_occupied(start_position[0], start_position[1]):
+                continue
+            if cost_map.is_occupied(goal_position[0], goal_position[1]):
+                continue
+            if start_position == goal_position:
+                continue
+            problem_valid = True
 
-    :param paths: Lists of paths, each one as a sequence of (x, y) positions: [(x1,y1),(x2,y2),(x3,y3),...,(xn,yn)].
-    :type paths: List of list of tuples.
-    :param remaining: How much of the path will remain
-    :type remaining: float
-    :return: Lists of partial paths
-    :rtype: List of list of tuples.
-    """
-    # Todo
-    partial_paths = []
-    return partial_paths
+        path_planner = PathPlanner(cost_map)
+        # plt.matshow(cost_map.grid)
+        # plt.plot(start_position[1], start_position[0], 'g*', markersize=8)
+        # plt.plot(goal_position[1], goal_position[0], 'rx', markersize=8)
+        # plt.show()
 
+        dijkstra_path, cost = path_planner.dijkstra(start_position, goal_position)
+        greedy_path, cost = path_planner.greedy(start_position, goal_position)
+        a_star_path, cost = path_planner.a_star(start_position, goal_position)
 
-def generate_input_data(num_iterations, remaining):
-    """
-    Generate the paths for each path_planner and adjust data to be a input to the neural network
+        return dijkstra_path, greedy_path, a_star_path
 
-    :param num_iterations: number of different maps to be created
-    :type num_iterations: Integer
-    :param remaining: How much of the path will remain
-    :type remaining: float
-    :return: Lists of partial paths and list of goals
-    :rtype: List of list of tuples and list of tuples
-    """
-    dijkstra_paths, greedy_paths, a_star_paths = generate_paths(num_iterations)
-    paths = merge_paths(dijkstra_paths, greedy_paths, a_star_paths)
-    goals = [x[-1] for x in paths]
-    partial_paths = cut_paths(paths, remaining)
-    # TODO: Refactor to return the map
-    return partial_paths, goals
+    def shuffle_maps(self, maps, goals):
+        # TODO
+        shuffled_maps = maps
+        shuffled_goals = goals
+        return shuffled_maps, shuffled_goals
 
+    def generate_data(self, num_iterations, remaining):
+        """
+        Generate the paths for each path_planner and adjust data to be a input to the neural network
 
+        :param num_iterations: number of different maps to be created
+        :type num_iterations: Integer
+        :param remaining: How much of the path will remain
+        :type remaining: float
+        :return: Lists of maps with the obstacles, partial paths and the goal
+        :rtype: List of numpy matrices (with width and height as provided in the constructor) and the list of goals
+        """
+        maps = []
+        goals = []
+        for i in range(num_iterations):
+            cost_map = CostMap(self.width, self.height)
+            random.seed(i)
+            cost_map.create_random_map(self.obstacle_width, self.obstacle_height, self.num_obstacles)
+
+            dijkstra_path, greedy_path, a_star_path = self.generate_paths(cost_map)
+
+            goals.append(dijkstra_path[-1])
+            goals.append(greedy_path[-1])
+            goals.append(a_star_path[-1])
+
+            dijkstra_partial_path = self.cut_path(dijkstra_path, remaining)
+            greedy_partial_path = self.cut_path(greedy_path, remaining)
+            a_star_partial_path = self.cut_path(a_star_path, remaining)
+
+            # maps append must maintain the same order of goals append
+            maps.append(self.write_path_on_map(dijkstra_partial_path, cost_map))
+            maps.append(self.write_path_on_map(greedy_partial_path, cost_map))
+            maps.append(self.write_path_on_map(a_star_partial_path, cost_map))
+
+        maps, goals = self.shuffle_maps(maps, goals)
+
+        return maps, goals
+
+'''
 # TODO: Relocate/reuse the codes below:
 # Daqui para baixo, codigo do Manga
 
@@ -139,21 +174,7 @@ def plot_path(cost_map, start, goal, path, filename, save_fig=True, show_fig=Tru
         plt.show()
 
 
-# Environment's parameters
-WIDTH = 160
-HEIGHT = 120
-OBSTACLE_WIDTH = 20
-OBSTACLE_HEIGHT = 15
-NUM_OBSTACLES = 20
 
-cost_map = CostMap(WIDTH, HEIGHT)
-# Initializing the random seed so we have reproducible results
-# Please, do not change the seed
-random.seed(15)
-# Create a random map
-cost_map.create_random_map(OBSTACLE_WIDTH, OBSTACLE_HEIGHT, NUM_OBSTACLES)
-# Create the path planner using the cost map
-path_planner = PathPlanner(cost_map)
 # These vectors will hold the computation time and path cost for each iteration,
 # so we may compute mean and standard deviation statistics in the Monte Carlo analysis.
 times = np.zeros((num_iterations, 1))
@@ -162,8 +183,8 @@ for i in range(num_iterations):
     problem_valid = False
     while not problem_valid:
         # Trying to generate a new problem
-        start_position = (random.randint(0, HEIGHT - 1), random.randint(0, WIDTH - 1))
-        goal_position = (random.randint(0, HEIGHT - 1), random.randint(0, WIDTH - 1))
+        start_position = (random.randint(0, self.height - 1), random.randint(0, self.width - 1))
+        goal_position = (random.randint(0, self.height - 1), random.randint(0, self.width - 1))
         # If the start or goal positions happen to be within an obstacle, we discard them and
         # try new samples
         if cost_map.is_occupied(start_position[0], start_position[1]):
@@ -192,3 +213,4 @@ for i in range(num_iterations):
 print(r'Compute time: mean: {0}, std: {1}'.format(np.mean(times), np.std(times)))
 if not (inf in costs):
     print(r'Cost: mean: {0}, std: {1}'.format(np.mean(costs), np.std(costs)))
+'''

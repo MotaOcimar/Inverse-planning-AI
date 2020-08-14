@@ -107,7 +107,7 @@ class DataGenerator:
         """
         maps = []
         goals = []
-        random.seed(15)
+        
 
         for i in range(num_iterations):
             cost_map = CostMap(self.width, self.height)

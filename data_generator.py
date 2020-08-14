@@ -31,16 +31,41 @@ class DataGenerator:
         partial_path = path[:partial_path_size]
         return partial_path
 
-    def write_path_on_map(self, path, cost_map):
+    def write_path_on_map(self, path, map_to_overwrite):
         """
         Write the path on the cost map: obstacle (-1), free (1), path (0)
         """
-        map_with_path = cost_map.grid.copy()
-
         for point in path:
-            map_with_path[point[0]][point[1]] = 0
+            map_to_overwrite[point[0]][point[1]] = 0
 
-        return map_with_path
+        return map_to_overwrite
+
+    def write_alternatives_on_map(self, original_goal, cost_map, num_alternatives):
+        original_goal_alternative = random.randint(0, num_alternatives-1)
+        alternatives_list = []
+        map_with_alternatives = cost_map.grid.copy()
+
+        for i in range(num_alternatives):
+
+            if i == original_goal_alternative:
+                alternatives_list.append(1)  # '1' means the goal alternative
+                map_with_alternatives[original_goal[0]][original_goal[1]] = (i+1)*10
+            else:
+                valid_goal = False
+
+                while not valid_goal:
+                    # Trying to generate a new fake goal
+                    goal_position = (random.randint(0, self.height - 1), random.randint(0, self.width - 1))
+                    # If the fake goal positions happen to be within an obstacle, we discard it and
+                    # try new sample
+                    if cost_map.is_occupied(goal_position[0], goal_position[1]):
+                        continue
+                    valid_goal = True
+
+                alternatives_list.append(0)  # '0' means there isn't the goal alternative
+                map_with_alternatives[goal_position[0]][goal_position[1]] = (i+1)*10
+
+        return map_with_alternatives, alternatives_list
 
     def generate_paths(self, cost_map):
         problem_valid = False
@@ -65,41 +90,40 @@ class DataGenerator:
         greedy_path, cost = path_planner.greedy(start_position, goal_position)
         a_star_path, cost = path_planner.a_star(start_position, goal_position)
 
-        return dijkstra_path, greedy_path, a_star_path
+        return [dijkstra_path, greedy_path, a_star_path]
 
-    def generate_data(self, num_iterations, remaining):
+    def generate_data(self, num_iterations, remaining, num_alternatives):
         """
         Generate the paths for each path_planner and adjust data to be a input to the neural network
 
+        :param num_alternatives: Number of alternatives of goals (1 correct and num_alternatives-1 fake goals)
+        :type num_alternatives: Integer
         :param num_iterations: number of different maps to be created
         :type num_iterations: Integer
         :param remaining: How much of the path will remain
         :type remaining: float
-        :return: Lists of maps with the obstacles, partial paths and the goal
+        :return: Lists of maps with the obstacles, partial paths and alternatives for goal, And list with goals
         :rtype: List of numpy matrices (with width and height as provided in the constructor) and the list of goals
         """
         maps = []
         goals = []
         random.seed(15)
+
         for i in range(num_iterations):
             cost_map = CostMap(self.width, self.height)
-            # random.seed(i)
             cost_map.create_random_map(self.obstacle_width, self.obstacle_height, self.num_obstacles)
 
-            dijkstra_path, greedy_path, a_star_path = self.generate_paths(cost_map)
+            paths = self.generate_paths(cost_map)
 
-            goals.append(dijkstra_path[-1])
-            goals.append(greedy_path[-1])
-            goals.append(a_star_path[-1])
+            for path in paths:
+                planner_map, planner_goal = self.write_alternatives_on_map(path[-1], cost_map, num_alternatives)
 
-            dijkstra_partial_path = self.cut_path(dijkstra_path, remaining)
-            greedy_partial_path = self.cut_path(greedy_path, remaining)
-            a_star_partial_path = self.cut_path(a_star_path, remaining)
+                planner_partial_path = self.cut_path(path, remaining)
 
-            # maps append must maintain the same order of goals append
-            maps.append(self.write_path_on_map(dijkstra_partial_path, cost_map))
-            maps.append(self.write_path_on_map(greedy_partial_path, cost_map))
-            maps.append(self.write_path_on_map(a_star_partial_path, cost_map))
+                planner_map = self.write_path_on_map(planner_partial_path, planner_map)
+
+                goals.append(planner_goal)
+                maps.append(planner_map)
 
         maps, goals = shuffle(maps, goals, random_state=0)
 

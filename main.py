@@ -15,18 +15,19 @@ from data_generator import DataGenerator
 # from neural_network import inverse_planning_model
 
 num_epochs = 10000
-num_iterations = 100
+num_iterations = 1
 remaining = 0.8
+num_alternatives = 4
 data_generator = DataGenerator()
-nn_input, nn_output = data_generator.generate_data(num_iterations, remaining)
+nn_input, nn_output = data_generator.generate_data(num_iterations, remaining, num_alternatives)
 nn_input = np.array(nn_input)
 nn_output = np.array(nn_output)
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 # for i in range(num_iterations*3):
 #     plt.matshow(nn_input[i])
-#     plt.plot(nn_output[i][1], nn_output[i][0], 'rx', markersize=8)
 #     plt.show()
+#     print(nn_output[i])
 
 # model = inverse_planning_model()
 # model.compile(loss=keras.losses.categorical_crossentropy, optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
@@ -53,5 +54,7 @@ def evaluate():
     # Avalia o resultado obtido pela NN comparando com os objetivos reais dos agentes
     pass
 
+
 if __name__ == "__main__":
-    train()
+    # train()
+    pass

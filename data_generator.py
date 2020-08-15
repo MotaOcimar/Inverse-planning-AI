@@ -7,7 +7,7 @@ from sklearn.utils import shuffle
 
 
 class DataGenerator:
-    def __init__(self, width=160, height=120, obstacle_width=20, obstacle_height=15, num_obstacles=20):
+    def __init__(self, width=128, height=128, obstacle_width=20, obstacle_height=15, num_obstacles=20):
 
         self.width = width
         self.height = height
@@ -82,25 +82,29 @@ class DataGenerator:
                 continue
             if start_position == goal_position:
                 continue
-            problem_valid = True
+            try:
+                # print(start_position, goal_position)
+                # plt.matshow(cost_map.grid)
+                # plt.plot(start_position[1], start_position[0], 'g*', markersize=8)
+                # plt.plot(goal_position[1], goal_position[0], 'rx', markersize=8)
+                # title = str(start_position) + ", " + str(goal_position)
+                # plt.title(title)
+                # plt.show()
 
-        path_planner = PathPlanner(cost_map)
+                path_planner = PathPlanner(cost_map)
+                dijkstra_path, cost = path_planner.dijkstra(start_position, goal_position)
+                greedy_path, cost = path_planner.greedy(start_position, goal_position)
+                a_star_path, cost = path_planner.a_star(start_position, goal_position)
 
-        # print(start_position, goal_position)
-        # plt.matshow(cost_map.grid)
-        # plt.plot(start_position[1], start_position[0], 'g*', markersize=8)
-        # plt.plot(goal_position[1], goal_position[0], 'rx', markersize=8)
-        # title = str(start_position) + ", " + str(goal_position)
-        # plt.title(title)
-        # plt.show()
+                problem_valid = True
 
-        dijkstra_path, cost = path_planner.dijkstra(start_position, goal_position)
-        greedy_path, cost = path_planner.greedy(start_position, goal_position)
-        a_star_path, cost = path_planner.a_star(start_position, goal_position)
+            except AttributeError:
+                # In case there is no valid path
+                continue
 
         return [dijkstra_path, greedy_path, a_star_path]
 
-    def generate_data(self, num_iterations, remaining, num_alternatives):
+    def generate_data(self, num_iterations, remaining, num_alternatives, one_map=False):
         """
         Generate the paths for each path_planner and adjust data to be a input to the neural network
 
@@ -110,15 +114,21 @@ class DataGenerator:
         :type num_iterations: Integer
         :param remaining: How much of the path will remain
         :type remaining: float
+        :param one_map: If True, just one map will be created
+        :type one_map: Bool
         :return: Lists of maps with the obstacles, partial paths and alternatives for goal, And list with goals
         :rtype: List of numpy matrices (with width and height as provided in the constructor) and the list of goals
         """
         maps = []
         goals = []
 
+        cost_map = CostMap(self.width, self.height)
+        cost_map.create_random_map(self.obstacle_width, self.obstacle_height, self.num_obstacles)
+
         for i in range(num_iterations):
-            cost_map = CostMap(self.width, self.height)
-            cost_map.create_random_map(self.obstacle_width, self.obstacle_height, self.num_obstacles)
+            if not one_map and i != 0:
+                cost_map = CostMap(self.width, self.height)
+                cost_map.create_random_map(self.obstacle_width, self.obstacle_height, self.num_obstacles)
 
             paths = self.generate_paths(cost_map)
 

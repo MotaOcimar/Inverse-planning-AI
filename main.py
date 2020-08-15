@@ -18,7 +18,7 @@ from data_generator import DataGenerator
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-train_set_size = 1002  # Will be approximated to the nearest multiple of 3 (floor)
+train_set_size = 2001  # Will be approximated to the nearest multiple of 3 (floor)
 eval_set_size = 100  # Will be approximated to the nearest multiple of 3 (floor)
 remaining = 0.8  # How much of the path will remain
 num_alternatives = 4  # Number of possibilities of goals for the network to choose
@@ -26,24 +26,26 @@ one_map = True  # If True, just one map will be created
 
 # Turn true to generate a new data set to train and evaluate
 # If there is none, will be generated anyway
-generate_new_data = True
+generate_new_data = False
 
 
 def train():
     # treina a NN usando os dados  gerados
     num_epochs = 500
+    batch_size = 1000  # Choose a value that your RAM can handle
     nn_input, expected_output = load_data('train')
-    height = len(nn_input[0])
-    width = len(nn_input[0][0])
-    output_len = len(expected_output[0])
-    model = inverse_planning_model(width=width, height=height, output_len=output_len)
+    nn_input = np.expand_dims(nn_input, axis=-1)  # To fit the conv NN
 
+    input_shape = nn_input[0].shape
+    output_len = len(expected_output[0])
+
+    model = make_lenet5(input_shape, output_len)
     model.compile(loss=keras.losses.categorical_crossentropy,
                   optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
-    # model.summary()
+    model.summary()
 
-    history = model.fit(nn_input, expected_output,
-                        batch_size=(len(nn_input)), epochs=num_epochs)
+    model.fit(nn_input, expected_output, batch_size=batch_size, epochs=num_epochs)
+
     save_model_to_json(model, 'inverse_planning_model')
 
 

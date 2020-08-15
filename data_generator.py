@@ -15,6 +15,8 @@ class DataGenerator:
         self.obstacle_height = obstacle_height
         self.num_obstacles = num_obstacles
 
+        self.alternatives_channel = None
+
     def create_path_channel(self, path, remaining):
 
         path_channel = - np.ones((self.width, self.height))
@@ -28,30 +30,34 @@ class DataGenerator:
 
         return path_channel
 
-    def create_alternatives_channel(self, original_goal, cost_map, num_alternatives):
+    def create_alternatives_channel(self, original_goal, cost_map, num_alternatives, use_previous=False):
         original_goal_alternative = random.randint(0, num_alternatives-1)
-        alternatives_list = []
-        alternatives_channel = - np.ones((self.width, self.height))
+        alternatives_list = np.zeros(num_alternatives)
+        alternatives_list[original_goal_alternative] = 1
 
-        for i in range(num_alternatives):
+        if not use_previous or self.alternatives_channel is None:
 
-            if i == original_goal_alternative:
-                alternatives_list.append(1)  # '1' means the goal alternative
-                alternatives_channel[original_goal[0]][original_goal[1]] = i+1
-            else:
-                valid_goal = False
+            alternatives_channel = - np.ones((self.width, self.height))
+            for i in range(num_alternatives):
 
-                while not valid_goal:
-                    # Trying to generate a new fake goal
-                    goal_position = (random.randint(0, self.height - 1), random.randint(0, self.width - 1))
-                    # If the fake goal positions happen to be within an obstacle, we discard it and
-                    # try new sample
-                    if cost_map.is_occupied(goal_position[0], goal_position[1]):
-                        continue
-                    valid_goal = True
+                if i == original_goal_alternative:
+                    alternatives_channel[original_goal[0]][original_goal[1]] = i+1
+                else:
+                    valid_goal = False
 
-                alternatives_list.append(0)  # '0' means there isn't the goal alternative
-                alternatives_channel[goal_position[0]][goal_position[1]] = i+1
+                    while not valid_goal:
+                        # Trying to generate a new fake goal
+                        goal_position = (random.randint(0, self.height - 1), random.randint(0, self.width - 1))
+                        # If the fake goal positions happen to be within an obstacle, we discard it and
+                        # try new sample
+                        if cost_map.is_occupied(goal_position[0], goal_position[1]):
+                            continue
+                        valid_goal = True
+
+                    alternatives_channel[goal_position[0]][goal_position[1]] = i+1
+                    self.alternatives_channel = alternatives_channel
+        else:
+            alternatives_channel = self.alternatives_channel
 
         return alternatives_channel, alternatives_list
 
@@ -98,29 +104,16 @@ class DataGenerator:
         if planner_goal is not None:
             for i in range(len(planner_map)):
                 for j in range(len(planner_map[0])):
-                    if planner_map[i][j] != 0:
+                    if planner_map[i][j] != -1:
                         alternative_index = int(planner_map[i][j]) - 1
                         # if is the true goal
                         if planner_goal[alternative_index] == 1:
                             goal_position = (i, j)
+                            plt.title(goal_position)
                             plt.plot(goal_position[1], goal_position[0], 'rx', markersize=8)
         plt.show()
 
-    def generate_data(self, num_iterations, remaining, num_alternatives, one_map=False):
-        """
-        Generate the paths for each path_planner and adjust data to be a input to the neural network
-
-        :param num_alternatives: Number of alternatives of goals (1 correct and num_alternatives-1 fake goals)
-        :type num_alternatives: Integer
-        :param num_iterations: number of different maps to be created
-        :type num_iterations: Integer
-        :param remaining: How much of the path will remain
-        :type remaining: float
-        :param one_map: If True, just one map will be created
-        :type one_map: Bool
-        :return: Lists of maps with the obstacles, partial paths and alternatives for goal, And list with goals
-        :rtype: List of numpy matrices (with width and height as provided in the constructor) and the list of goals
-        """
+    def generate_data(self, num_iterations, remaining, num_alternatives, one_map=False, same_alternatives=False):
         maps = []
         goals = []
 
@@ -137,7 +130,9 @@ class DataGenerator:
             paths = self.generate_paths(cost_map)
             for path in paths:
 
-                alternatives_channel, planner_goal = self.create_alternatives_channel(path[-1], cost_map, num_alternatives)
+                alternatives_channel, planner_goal = self.create_alternatives_channel(path[-1], cost_map,
+                                                                                      num_alternatives,
+                                                                                      use_previous=same_alternatives)
 
                 path_channel = self.create_path_channel(path, remaining)
 

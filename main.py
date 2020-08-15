@@ -19,10 +19,11 @@ eval_set_size = 100  # Will be approximated to the nearest multiple of 3 (floor)
 remaining = 0.8  # How much of the path will remain
 num_alternatives = 4  # Number of possibilities of goals for the network to choose
 one_map = True  # If True, just one map will be created
+same_alternatives = True  # If True, all maps will have the same alternatives of goals
 
 # Turn true to generate a new data set to train and evaluate
 # If there is none, will be generated anyway
-generate_new_data = False
+generate_new_data = True
 
 
 def train():
@@ -88,7 +89,8 @@ def load_data(data_type):
         print('Generating ' + data_type + ' data...', end='')
         # Run and save train or evaluate set
         data_generator = DataGenerator()
-        nn_input, expected_output = data_generator.generate_data(set_size//3, remaining, num_alternatives, one_map=True)
+        nn_input, expected_output = data_generator.generate_data(set_size//3, remaining, num_alternatives, one_map,
+                                                                 same_alternatives)
         nn_input = np.array(nn_input)
         expected_output = np.array(expected_output)
 

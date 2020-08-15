@@ -4,9 +4,6 @@ from tensorflow.keras.models import model_from_json
 import matplotlib.pyplot as plt
 
 
-
-
-
 def display_image(image, title):
     image = image.squeeze()
     plt.figure()
@@ -32,3 +29,17 @@ def load_model_from_json(model_name):
     loaded_model.load_weights(model_name + '.h5')
     return loaded_model
 
+
+def greatest_equal_one(vec):
+    """
+    :param vec: base vector to transformation
+    :type vec: numpy vector.
+    """
+
+    ret_vec = []
+    for el in vec:
+        if el == np.max(vec):
+            ret_vec.append(1)
+        else:
+            ret_vec.append(0)
+    return ret_vec

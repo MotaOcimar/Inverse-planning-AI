@@ -86,6 +86,14 @@ class DataGenerator:
 
         path_planner = PathPlanner(cost_map)
 
+        # print(start_position, goal_position)
+        # plt.matshow(cost_map.grid)
+        # plt.plot(start_position[1], start_position[0], 'g*', markersize=8)
+        # plt.plot(goal_position[1], goal_position[0], 'rx', markersize=8)
+        # title = str(start_position) + ", " + str(goal_position)
+        # plt.title(title)
+        # plt.show()
+
         dijkstra_path, cost = path_planner.dijkstra(start_position, goal_position)
         greedy_path, cost = path_planner.greedy(start_position, goal_position)
         a_star_path, cost = path_planner.a_star(start_position, goal_position)
@@ -107,7 +115,6 @@ class DataGenerator:
         """
         maps = []
         goals = []
-        
 
         for i in range(num_iterations):
             cost_map = CostMap(self.width, self.height)

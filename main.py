@@ -2,54 +2,47 @@ import os
 from time import time
 import numpy as np
 import random
+import pickle
 
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import TensorBoard
-from utils import save_model_to_json, load_model_from_json
+from utils import save_model_to_json, load_model_from_json, greatest_equal_one
 
 from neural_network import *
 import matplotlib.pyplot as plt
 from data_generator import DataGenerator
-# from neural_network import inverse_planning_model
-
 
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-# for i in range(num_iterations*3):
-#     plt.matshow(nn_input[i])
-#     plt.show()
-#     print(nn_output[i])
 
-# model = inverse_planning_model()
-# model.compile(loss=keras.losses.categorical_crossentropy, optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
-# model.fit(inputs, expected_outputs, batch_size, epochs)
+train_set_size = 1000  # Will be approximated to the nearest multiple of 3 (floor)
+eval_set_size = 100  # Will be approximated to the nearest multiple of 3 (floor)
+remaining = 0.8  # How much of the path will remain
+num_alternatives = 4  # Number of possibilities of goals for the network to choose
 
-remaining = 0.8
-num_alternatives = 4
+# Turn true to generate a new data set to train and evaluate
+# If there is none, will be generated anyway
+generate_new_data = False
+
 
 def train():
-    # treina a NN usando os dados  gerados por Monte Carlo
+    # treina a NN usando os dados  gerados
     num_epochs = 50
-    num_iterations = 1000
-    random.seed(1)
-    data_generator = DataGenerator()
-    nn_input, nn_output = data_generator.generate_data(num_iterations, remaining, num_alternatives)
-    nn_input = np.array(nn_input)
-    nn_output = np.array(nn_output)
+    nn_input, expected_output = load_data('train')
     height = len(nn_input[0])
     width = len(nn_input[0][0])
-    output_len = len(nn_output[0])
-    model = inverse_planning_model( width = width, height = height, output_len = output_len)
+    output_len = len(expected_output[0])
+    model = inverse_planning_model(width=width, height=height, output_len=output_len)
 
     model.compile(loss=keras.losses.categorical_crossentropy,
-              optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
+                  optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
     # model.summary()
-    
-    history = model.fit(nn_input, nn_output,
-                    batch_size=(len(nn_input)), epochs=num_epochs)
+
+    history = model.fit(nn_input, expected_output,
+                        batch_size=(len(nn_input)), epochs=num_epochs)
     save_model_to_json(model, 'inverse_planning_model')
 
 
@@ -57,12 +50,8 @@ def evaluate():
     # Avalia o resultado obtido pela NN comparando com os objetivos reais dos agentes
     model = load_model_from_json('inverse_planning_model')
     model.compile(loss=keras.losses.categorical_crossentropy, optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
-    num_iterations = 100
-    random.seed(2)
-    test_features = DataGenerator()
-    test_nn_input, expected_nn_output = test_features.generate_data(num_iterations, remaining, num_alternatives)
-    test_nn_input = np.array(test_nn_input)
-    expected_nn_output = np.array(expected_nn_output)
+
+    test_nn_input, expected_nn_output = load_data('eval')
     predicted_labels = model.predict(test_nn_input)
     model.summary()
     score = model.evaluate(test_nn_input, expected_nn_output)
@@ -73,21 +62,37 @@ def evaluate():
         print('Example: {}. Expected Label: {}. Predicted Label: {}.'.format(index, expected_nn_output[index], greatest_equal_one(predicted_labels[index])))
 
 
-def greatest_equal_one (vec):
-    '''
-    :param vec: base vector to transformation 
-    :type vec: numpy vector.
-    '''
-  
-    ret_vec = []
-    for el in vec:
-        if el == np.max(vec):
-            ret_vec.append(1)
-        else:
-            ret_vec.append(0)
-    return ret_vec 
+def load_data(data_type):
+    data_file_name = data_type + '.dat'
+    if data_type == 'train':
+        set_size = train_set_size
+        random.seed(1)
+    elif data_type == 'eval':
+        set_size = eval_set_size
+        random.seed(2)
+    else:
+        raise Exception("Passe o tipo de dado a ser carregado ('train' ou 'eval')")
+
+    if generate_new_data or not os.path.exists('./' + data_file_name):
+        # Run and save train or evaluate set
+        data_generator = DataGenerator()
+        nn_input, expected_output = data_generator.generate_data(set_size//3, remaining, num_alternatives)
+        nn_input = np.array(nn_input)
+        expected_output = np.array(expected_output)
+
+        with open(data_file_name, 'wb') as file:
+            pickle.dump([nn_input, expected_output], file)
+
+        return nn_input, expected_output
+
+    else:
+        with open(data_file_name, 'rb') as file:
+            [nn_input, expected_output] = pickle.load(file)
+
+        return nn_input, expected_output
+
 
 if __name__ == "__main__":
     # print(nn_input.shape)
-    train()
-    # evaluate()
+    # train()
+    evaluate()

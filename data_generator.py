@@ -31,7 +31,7 @@ class DataGenerator:
     def create_alternatives_channel(self, original_goal, cost_map, num_alternatives):
         original_goal_alternative = random.randint(0, num_alternatives-1)
         alternatives_list = []
-        alternatives_channel = np.zeros((self.width, self.height))
+        alternatives_channel = - np.ones((self.width, self.height))
 
         for i in range(num_alternatives):
 

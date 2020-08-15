@@ -110,5 +110,5 @@ def load_data(data_type):
 
 
 if __name__ == "__main__":
-    # train()
+    train()
     evaluate()

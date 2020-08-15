@@ -22,17 +22,16 @@ one_map = True  # If True, just one map will be created
 
 # Turn true to generate a new data set to train and evaluate
 # If there is none, will be generated anyway
-generate_new_data = True
+generate_new_data = False
 
 
 def train():
     # treina a NN usando os dados  gerados
     nn_input, expected_output = load_data('train')
-    nn_input = np.expand_dims(nn_input, axis=-1)  # To fit the conv NN
 
     num_epochs = 100
     # batch_size = 800  # Choose a value that your RAM can handle
-    batch_size = len(nn_input)
+    batch_size = len(nn_input)//2
 
     input_shape = nn_input[0].shape
     output_len = len(expected_output[0])
@@ -54,7 +53,6 @@ def evaluate():
     model.compile(loss=keras.losses.categorical_crossentropy, optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
 
     test_nn_input, expected_nn_output = load_data('eval')
-    test_nn_input = np.expand_dims(test_nn_input, axis=-1)  # To fit the conv NN
 
     predicted_labels = model.predict(test_nn_input)
     model.summary()
@@ -112,5 +110,5 @@ def load_data(data_type):
 
 
 if __name__ == "__main__":
-    train()
-    # evaluate()
+    # train()
+    evaluate()

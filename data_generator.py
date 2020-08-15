@@ -15,41 +15,29 @@ class DataGenerator:
         self.obstacle_height = obstacle_height
         self.num_obstacles = num_obstacles
 
-    def cut_path(self, path, remaining):
-        """
-        Removes information from the end of the planned path
+    def create_path_channel(self, path, remaining):
 
-        :param path: Sequence of (x, y) positions: [(x1,y1),(x2,y2),(x3,y3),...,(xn,yn)].
-        :type path: List of tuples.
-        :param remaining: How much of the path will remain
-        :type remaining: float
-        :return: Partial path
-        :rtype: List of tuples.
-        """
+        path_channel = - np.ones((self.width, self.height))
+
         path_size = len(path)
         partial_path_size = int(path_size*remaining)  # Floor
-        partial_path = path[:partial_path_size]
-        return partial_path
 
-    def write_path_on_map(self, path, map_to_overwrite):
-        """
-        Write the path on the cost map: obstacle (-1), free (1), path (0)
-        """
-        for point in path:
-            map_to_overwrite[point[0]][point[1]] = - 99
+        for i in range(partial_path_size):
+            point = path[i]
+            path_channel[point[0]][point[1]] = i/path_size  # how much percent did he complete the path
 
-        return map_to_overwrite
+        return path_channel
 
-    def write_alternatives_on_map(self, original_goal, cost_map, num_alternatives):
+    def create_alternatives_channel(self, original_goal, cost_map, num_alternatives):
         original_goal_alternative = random.randint(0, num_alternatives-1)
         alternatives_list = []
-        map_with_alternatives = cost_map.grid.copy()
+        alternatives_channel = np.zeros((self.width, self.height))
 
         for i in range(num_alternatives):
 
             if i == original_goal_alternative:
                 alternatives_list.append(1)  # '1' means the goal alternative
-                map_with_alternatives[original_goal[0]][original_goal[1]] = (i+1)*10
+                alternatives_channel[original_goal[0]][original_goal[1]] = i+1
             else:
                 valid_goal = False
 
@@ -63,9 +51,9 @@ class DataGenerator:
                     valid_goal = True
 
                 alternatives_list.append(0)  # '0' means there isn't the goal alternative
-                map_with_alternatives[goal_position[0]][goal_position[1]] = (i+1)*10
+                alternatives_channel[goal_position[0]][goal_position[1]] = i+1
 
-        return map_with_alternatives, alternatives_list
+        return alternatives_channel, alternatives_list
 
     def generate_paths(self, cost_map):
         problem_valid = False
@@ -104,17 +92,18 @@ class DataGenerator:
 
         return [dijkstra_path, greedy_path, a_star_path]
 
-    def plot_map(self, planner_map, planner_goal):
-        for i in range(len(planner_map)):
-            for j in range(len(planner_map[0])):
-                if planner_map[i][j] % 10 == 0 and planner_map[i][j] != 0:
-                    alternative_index = int(planner_map[i][j] // 10) - 1
-                    # if is the true goal
-                    if planner_goal[alternative_index] == 1:
-                        goal_position = (i, j)
-
+    def plot_map(self, planner_map, planner_goal=None):
         plt.matshow(planner_map)
-        plt.plot(goal_position[1], goal_position[0], 'rx', markersize=8)
+
+        if planner_goal is not None:
+            for i in range(len(planner_map)):
+                for j in range(len(planner_map[0])):
+                    if planner_map[i][j] != 0:
+                        alternative_index = int(planner_map[i][j]) - 1
+                        # if is the true goal
+                        if planner_goal[alternative_index] == 1:
+                            goal_position = (i, j)
+                            plt.plot(goal_position[1], goal_position[0], 'rx', markersize=8)
         plt.show()
 
     def generate_data(self, num_iterations, remaining, num_alternatives, one_map=False):
@@ -143,16 +132,21 @@ class DataGenerator:
                 cost_map = CostMap(self.width, self.height)
                 cost_map.create_random_map(self.obstacle_width, self.obstacle_height, self.num_obstacles)
 
+            obstacle_channel = cost_map.grid
+
             paths = self.generate_paths(cost_map)
-
             for path in paths:
-                planner_map, planner_goal = self.write_alternatives_on_map(path[-1], cost_map, num_alternatives)
 
-                planner_partial_path = self.cut_path(path, remaining)
+                alternatives_channel, planner_goal = self.create_alternatives_channel(path[-1], cost_map, num_alternatives)
 
-                planner_map = self.write_path_on_map(planner_partial_path, planner_map)
+                path_channel = self.create_path_channel(path, remaining)
 
-                # self.plot_map(planner_map, planner_goal)
+                planner_map = np.concatenate((obstacle_channel[..., None], alternatives_channel[..., None],
+                                              path_channel[..., None]), axis=2)
+
+                # self.plot_map(obstacle_channel)
+                # self.plot_map(path_channel)
+                # self.plot_map(alternatives_channel, planner_goal)
 
                 goals.append(planner_goal)
                 maps.append(planner_map)

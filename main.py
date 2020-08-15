@@ -4,18 +4,14 @@ import numpy as np
 import random
 import pickle
 
-from sklearn.model_selection import train_test_split
 from tensorflow import keras
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import TensorBoard
 from utils import save_model_to_json, load_model_from_json, greatest_equal_one
 
 from neural_network import *
-import matplotlib.pyplot as plt
 from data_generator import DataGenerator
 
-
+# Comment this line to enable training using your GPU
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 train_set_size = 2001  # Will be approximated to the nearest multiple of 3 (floor)
@@ -31,8 +27,8 @@ generate_new_data = False
 
 def train():
     # treina a NN usando os dados  gerados
-    num_epochs = 500
-    batch_size = 1000  # Choose a value that your RAM can handle
+    num_epochs = 30
+    batch_size = 800  # Choose a value that your RAM can handle
     nn_input, expected_output = load_data('train')
     nn_input = np.expand_dims(nn_input, axis=-1)  # To fit the conv NN
 
@@ -44,7 +40,8 @@ def train():
                   optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
     model.summary()
 
-    model.fit(nn_input, expected_output, batch_size=batch_size, epochs=num_epochs)
+    tensorboard = TensorBoard(log_dir=os.path.join("logs", "{}".format(time())))
+    model.fit(nn_input, expected_output, batch_size=batch_size, epochs=num_epochs, callbacks=[tensorboard])
 
     save_model_to_json(model, 'inverse_planning_model')
 
@@ -55,6 +52,8 @@ def evaluate():
     model.compile(loss=keras.losses.categorical_crossentropy, optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
 
     test_nn_input, expected_nn_output = load_data('eval')
+    test_nn_input = np.expand_dims(test_nn_input, axis=-1)  # To fit the conv NN
+
     predicted_labels = model.predict(test_nn_input)
     model.summary()
     score = model.evaluate(test_nn_input, expected_nn_output)
@@ -102,6 +101,5 @@ def load_data(data_type):
 
 
 if __name__ == "__main__":
-    # print(nn_input.shape)
     train()
-    evaluate()
+    # evaluate()

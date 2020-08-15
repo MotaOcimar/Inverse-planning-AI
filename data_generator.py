@@ -7,7 +7,7 @@ from sklearn.utils import shuffle
 
 
 class DataGenerator:
-    def __init__(self, width=128, height=128, obstacle_width=20, obstacle_height=15, num_obstacles=20):
+    def __init__(self, width=32, height=32, obstacle_width=5, obstacle_height=4, num_obstacles=20):
 
         self.width = width
         self.height = height
@@ -36,7 +36,7 @@ class DataGenerator:
         Write the path on the cost map: obstacle (-1), free (1), path (0)
         """
         for point in path:
-            map_to_overwrite[point[0]][point[1]] = 0
+            map_to_overwrite[point[0]][point[1]] = - 99
 
         return map_to_overwrite
 
@@ -83,14 +83,6 @@ class DataGenerator:
             if start_position == goal_position:
                 continue
             try:
-                # print(start_position, goal_position)
-                # plt.matshow(cost_map.grid)
-                # plt.plot(start_position[1], start_position[0], 'g*', markersize=8)
-                # plt.plot(goal_position[1], goal_position[0], 'rx', markersize=8)
-                # title = str(start_position) + ", " + str(goal_position)
-                # plt.title(title)
-                # plt.show()
-
                 path_planner = PathPlanner(cost_map)
                 dijkstra_path, cost = path_planner.dijkstra(start_position, goal_position)
                 greedy_path, cost = path_planner.greedy(start_position, goal_position)
@@ -102,7 +94,28 @@ class DataGenerator:
                 # In case there is no valid path
                 continue
 
+        # print(start_position, goal_position)
+        # plt.matshow(cost_map.grid)
+        # plt.plot(start_position[1], start_position[0], 'g*', markersize=8)
+        # plt.plot(goal_position[1], goal_position[0], 'rx', markersize=8)
+        # title = str(start_position) + ", " + str(goal_position)
+        # plt.title(title)
+        # plt.show()
+
         return [dijkstra_path, greedy_path, a_star_path]
+
+    def plot_map(self, planner_map, planner_goal):
+        for i in range(len(planner_map)):
+            for j in range(len(planner_map[0])):
+                if planner_map[i][j] % 10 == 0 and planner_map[i][j] != 0:
+                    alternative_index = int(planner_map[i][j] // 10) - 1
+                    # if is the true goal
+                    if planner_goal[alternative_index] == 1:
+                        goal_position = (i, j)
+
+        plt.matshow(planner_map)
+        plt.plot(goal_position[1], goal_position[0], 'rx', markersize=8)
+        plt.show()
 
     def generate_data(self, num_iterations, remaining, num_alternatives, one_map=False):
         """
@@ -138,6 +151,8 @@ class DataGenerator:
                 planner_partial_path = self.cut_path(path, remaining)
 
                 planner_map = self.write_path_on_map(planner_partial_path, planner_map)
+
+                # self.plot_map(planner_map, planner_goal)
 
                 goals.append(planner_goal)
                 maps.append(planner_map)

@@ -14,7 +14,7 @@ from data_generator import DataGenerator
 # Comment this line to enable training using your GPU
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-train_set_size = 2001  # Will be approximated to the nearest multiple of 3 (floor)
+train_set_size = 9999  # Will be approximated to the nearest multiple of 3 (floor)
 eval_set_size = 100  # Will be approximated to the nearest multiple of 3 (floor)
 remaining = 0.8  # How much of the path will remain
 num_alternatives = 4  # Number of possibilities of goals for the network to choose
@@ -22,15 +22,17 @@ one_map = True  # If True, just one map will be created
 
 # Turn true to generate a new data set to train and evaluate
 # If there is none, will be generated anyway
-generate_new_data = False
+generate_new_data = True
 
 
 def train():
     # treina a NN usando os dados  gerados
-    num_epochs = 30
-    batch_size = 800  # Choose a value that your RAM can handle
     nn_input, expected_output = load_data('train')
     nn_input = np.expand_dims(nn_input, axis=-1)  # To fit the conv NN
+
+    num_epochs = 100
+    # batch_size = 800  # Choose a value that your RAM can handle
+    batch_size = len(nn_input)
 
     input_shape = nn_input[0].shape
     output_len = len(expected_output[0])
@@ -65,7 +67,6 @@ def evaluate():
 
 
 def load_data(data_type):
-    data_file_name = data_type + '.dat'
     if data_type == 'train':
         set_size = train_set_size
         random.seed(1)
@@ -74,6 +75,16 @@ def load_data(data_type):
         random.seed(2)
     else:
         raise Exception("Passe o tipo de dado a ser carregado ('train' ou 'eval')")
+
+    if one_map:
+        data_file_name = data_type + '-one_map'
+    else:
+        data_file_name = data_type + '-mult_map'
+
+    data_file_name = data_file_name + '-' + str(set_size)
+    data_file_name = data_file_name + '-' + str(remaining)
+    data_file_name = data_file_name + '-' + str(num_alternatives)
+    data_file_name = data_file_name + '.dat'
 
     if generate_new_data or not os.path.exists('./' + data_file_name):
         print('Generating ' + data_type + ' data...', end='')

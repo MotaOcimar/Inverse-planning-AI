@@ -13,12 +13,13 @@ def inverse_planning_model(height, width, output_len):
     
     # Todo: implement LeNet-5 model
     activation_func = activations.tanh
-    lambda_l2 = 0
+    lambda_l2 = 0.00
 
     # 1
+    model.add(layers.Dense(units=168,kernel_regularizer=regularizers.l2(lambda_l2), activation=activation_func,  input_shape=( height, width)))
     
     # 2
-    model.add(layers.Dense(units=84,kernel_regularizer=regularizers.l2(lambda_l2), activation=activation_func,  input_shape=( height, width)))
+    model.add(layers.Dense(units=84, activation=activation_func, kernel_regularizer=regularizers.l2(lambda_l2)))
 
     #3
     model.add(layers.Dense(units=84, activation=activation_func, kernel_regularizer=regularizers.l2(lambda_l2)))

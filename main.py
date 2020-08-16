@@ -4,18 +4,14 @@ import numpy as np
 import random
 import pickle
 
-from sklearn.model_selection import train_test_split
 from tensorflow import keras
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import TensorBoard
 from utils import save_model_to_json, load_model_from_json, greatest_equal_one
 
 from neural_network import *
-import matplotlib.pyplot as plt
 from data_generator import DataGenerator
 
-
+# Comment this line to enable training using your GPU
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 train_set_size = 1002  # Will be approximated to the nearest multiple of 3 (floor)
@@ -31,8 +27,12 @@ generate_new_data = True
 
 def train():
     # treina a NN usando os dados  gerados
-    num_epochs = 500
     nn_input, expected_output = load_data('train')
+
+    num_epochs = 100
+    # batch_size = 800  # Choose a value that your RAM can handle
+    batch_size = len(nn_input)
+
     height = len(nn_input[0])
     width = len(nn_input[0][0])
     output_len = len(expected_output[0])
@@ -40,10 +40,11 @@ def train():
 
     model.compile(loss=keras.losses.categorical_crossentropy,
                   optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
-    # model.summary()
+    model.summary()
 
-    history = model.fit(nn_input, expected_output,
-                        batch_size=(len(nn_input)), epochs=num_epochs)
+    tensorboard = TensorBoard(log_dir=os.path.join("logs", "{}".format(time())))
+    model.fit(nn_input, expected_output, batch_size=batch_size, epochs=num_epochs, callbacks=[tensorboard])
+
     save_model_to_json(model, 'inverse_planning_model')
 
 
@@ -64,7 +65,6 @@ def evaluate():
 
 
 def load_data(data_type):
-    data_file_name = data_type + '.dat'
     if data_type == 'train':
         set_size = train_set_size
         random.seed(1)
@@ -73,6 +73,16 @@ def load_data(data_type):
         random.seed(2)
     else:
         raise Exception("Passe o tipo de dado a ser carregado ('train' ou 'eval')")
+
+    if one_map:
+        data_file_name = data_type + '-one_map'
+    else:
+        data_file_name = data_type + '-mult_map'
+
+    data_file_name = data_file_name + '-' + str(set_size)
+    data_file_name = data_file_name + '-' + str(remaining)
+    data_file_name = data_file_name + '-' + str(num_alternatives)
+    data_file_name = data_file_name + '.dat'
 
     if generate_new_data or not os.path.exists('./' + data_file_name):
         print('Generating ' + data_type + ' data...', end='')
@@ -100,6 +110,5 @@ def load_data(data_type):
 
 
 if __name__ == "__main__":
-    # print(nn_input.shape)
     train()
-    evaluate()
+    # evaluate()

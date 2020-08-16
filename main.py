@@ -22,7 +22,7 @@ one_map = True  # If True, just one map will be created
 
 # Turn true to generate a new data set to train and evaluate
 # If there is none, will be generated anyway
-generate_new_data = True
+generate_new_data = False
 
 
 def train():
@@ -111,4 +111,4 @@ def load_data(data_type):
 
 if __name__ == "__main__":
     train()
-    # evaluate()
+    evaluate()

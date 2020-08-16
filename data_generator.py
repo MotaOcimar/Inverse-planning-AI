@@ -154,7 +154,7 @@ class DataGenerator:
 
                 planner_map = self.write_path_on_map(planner_partial_path, planner_map)
 
-                self.plot_map(planner_map, planner_goal)
+                # self.plot_map(planner_map, planner_goal)
 
                 goals.append(planner_goal)
                 maps.append(planner_map)

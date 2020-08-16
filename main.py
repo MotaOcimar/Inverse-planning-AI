@@ -14,8 +14,9 @@ from data_generator import DataGenerator
 # Comment this line to enable training using your GPU
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-train_set_size = 1002  # Will be approximated to the nearest multiple of 3 (floor)
-eval_set_size = 100  # Will be approximated to the nearest multiple of 3 (floor)
+# Data generation variables
+train_set_size = 4002  # Will be approximated to the nearest multiple of 3 (floor)
+eval_set_size = 300  # Will be approximated to the nearest multiple of 3 (floor)
 remaining = 0.8  # How much of the path will remain
 num_alternatives = 4  # Number of possibilities of goals for the network to choose
 one_map = True  # If True, just one map will be created
@@ -26,28 +27,30 @@ static_alternatives = True  # If True, all maps will have the same alternatives 
 generate_new_data = True
 
 # Plotting
-plot_maps = True  # If true, plot some maps generated
+plot_maps = False  # If true, plot some maps generated
 plot_limit = 10  # Number of samples maps to plots
+
+
+# Train variables
+num_epochs = 800
+# batch_size = 800  # Choose a value that your RAM can handle
+batch_size = train_set_size
 
 
 def train():
     # treina a NN usando os dados  gerados
     nn_input, expected_output = load_data('train')
-
-    num_epochs = 100
-    # batch_size = 800  # Choose a value that your RAM can handle
-    batch_size = len(nn_input)
+    output_len = len(expected_output[0])
 
     height = len(nn_input[0])
     width = len(nn_input[0][0])
-    output_len = len(expected_output[0])
     model = inverse_planning_model(width=width, height=height, output_len=output_len)
 
     model.compile(loss=keras.losses.categorical_crossentropy,
                   optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
     model.summary()
 
-    tensorboard = TensorBoard(log_dir=os.path.join("logs", "{}".format(time())))
+    tensorboard = TensorBoard(log_dir=os.path.join("logs", "{}".format(time())), profile_batch=0)
     model.fit(nn_input, expected_output, batch_size=batch_size, epochs=num_epochs, callbacks=[tensorboard])
 
     save_model_to_json(model, 'inverse_planning_model')
@@ -72,10 +75,10 @@ def evaluate():
 def load_data(data_type):
     if data_type == 'train':
         set_size = train_set_size
-        random.seed(1)
+        random.seed(0)
     elif data_type == 'eval':
         set_size = eval_set_size
-        random.seed(2)
+        random.seed(4)
     else:
         raise Exception("Passe o tipo de dado a ser carregado ('train' ou 'eval')")
 

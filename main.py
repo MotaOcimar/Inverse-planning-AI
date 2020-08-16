@@ -23,7 +23,7 @@ one_map = True  # If True, just one map will be created
 
 # Turn true to generate a new data set to train and evaluate
 # If there is none, will be generated anyway
-generate_new_data = False
+generate_new_data = True
 
 show_map = False
 
@@ -44,7 +44,7 @@ def train():
                   optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
     model.summary()
 
-    tensorboard = TensorBoard(log_dir=os.path.join("logs", "{}".format(time())))
+    tensorboard = TensorBoard(log_dir=os.path.join("logs", "{}".format(time())), profile_batch=0)
     model.fit(nn_input, expected_output, batch_size=batch_size, epochs=num_epochs, callbacks=[tensorboard])
 
     save_model_to_json(model, 'inverse_planning_model')
@@ -83,7 +83,7 @@ def evaluate():
 def load_data(data_type):
     data_file_name = data_type + '.dat'
 
-    # Cost map must be same always. So it needs to be generated before the seed is set.
+    # Cost map must be the same always. So it needs to be generated before the seed is set.
     if generate_new_data or not os.path.exists('./' + data_file_name):
         cost_map_generator = CostMapGenerator(num_goals=num_alternatives, show_map = show_map)
         
@@ -93,7 +93,7 @@ def load_data(data_type):
         random.seed(1)
     elif data_type == 'eval':
         set_size = eval_set_size
-        random.seed(2)
+        random.seed(3)
     else:
         raise Exception("Passe o tipo de dado a ser carregado ('train' ou 'eval')")
 
@@ -124,5 +124,5 @@ def load_data(data_type):
 
 
 if __name__ == "__main__":
-    train()
-    # evaluate()
+    # train()
+    evaluate()

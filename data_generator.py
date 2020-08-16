@@ -231,7 +231,7 @@ class DataGenerator ():
         cost_map = CostMap(self.width, self.height)
         cost_map.create_random_map(self.obstacle_width, self.obstacle_height, self.num_obstacles)
         
-
+        goals = []
         for i in range(num_iterations):
 
             goal = random.choice(possible_goals) #goal as pair of coordenates

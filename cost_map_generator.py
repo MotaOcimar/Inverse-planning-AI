@@ -33,11 +33,11 @@ class CostMapGenerator():
         self.cost_map.create_random_map(obstacle_width, obstacle_height, num_obstacles)
         self.possible_goals = generate_random_goals(self.num_goals,self.cost_map)
         if show_map:
-            plot_path(cost_map=self.cost_map)
+            plot_path(cost_map=self.cost_map.grid)
 
 
 
-def plot_path(cost_map, start=None, goal=None, path = [], filename='filename', save_fig=False, show_fig=True, fig_format='png'):
+def plot_path(grid, start=None, goal=None, possible_goals=None, path = [], filename='filename', save_fig=False, show_fig=True, fig_format='png'):
     """
     Plots the path.
 
@@ -50,7 +50,7 @@ def plot_path(cost_map, start=None, goal=None, path = [], filename='filename', s
     :param show_fig: if the figure will be shown in the screen.
     :param fig_format: the format used to save the figure.
     """
-    plt.matshow(cost_map.grid)
+    plt.matshow(grid)
     x = []
     y = []
     for point in path:
@@ -60,8 +60,13 @@ def plot_path(cost_map, start=None, goal=None, path = [], filename='filename', s
         plt.plot(x, y, linewidth=2)
     if start!=None:
         plt.plot(start[1], start[0], 'y*', markersize=8)
-    if goal!= None:
+    if goal.any():
         plt.plot(goal[1], goal[0], 'rx', markersize=8)
+
+    if possible_goals:
+        for gl in possible_goals:
+            if gl!=goal:
+                plt.plot(goal[1], goal[0], 'bx', markersize=8)
 
     plt.xlabel('x / j')
     plt.ylabel('y / i')
@@ -79,5 +84,5 @@ def plot_path(cost_map, start=None, goal=None, path = [], filename='filename', s
         plt.show()
 
 if __name__ == "__main__":
-    cost_map_generator = CostMapGenerator()
-    plot_path(cost_map=cost_map_generator.cost_map)
+    cost_map_generator = CostMapGenerator(num_goals=4)
+    plot_path(grid=cost_map_generator.cost_map.grid)

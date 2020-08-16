@@ -127,9 +127,10 @@ class DataGenerator:
         plt.plot(goal_position[1], goal_position[0], 'rx', markersize=8)
         plt.show()
 
-    def generate_data(self, num_iterations, remaining, num_alternatives):
+    def generate_data(self, num_iterations, remaining, num_alternatives, plot_maps=False, plot_limit=10):
         maps = []
         goals = []
+        plot_count = 0
 
         # Generate the cost_map
         cost_map = CostMap(self.width, self.height)
@@ -158,7 +159,9 @@ class DataGenerator:
 
                 planner_map = self.write_path_on_map(planner_partial_path, planner_map)
 
-                # self.plot_map(planner_map, planner_goal)
+                if plot_maps and plot_count < plot_limit:
+                    self.plot_map(planner_map, planner_goal)
+                    plot_count += 1
 
                 goals.append(planner_goal)
                 maps.append(planner_map)

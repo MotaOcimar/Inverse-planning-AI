@@ -23,7 +23,11 @@ static_alternatives = True  # If True, all maps will have the same alternatives 
 
 # Turn true to generate a new data set to train and evaluate
 # If there is none, will be generated anyway
-generate_new_data = False
+generate_new_data = True
+
+# Plotting
+plot_maps = True  # If true, plot some maps generated
+plot_limit = 10  # Number of samples maps to plots
 
 
 def train():
@@ -89,7 +93,8 @@ def load_data(data_type):
         print('Generating ' + data_type + ' data...', end='')
         # Run and save train or evaluate set
         data_generator = DataGenerator(one_map=one_map, static_alternatives=static_alternatives)
-        nn_input, expected_output = data_generator.generate_data(set_size//3, remaining, num_alternatives)
+        nn_input, expected_output = data_generator.generate_data(set_size//3, remaining, num_alternatives,
+                                                                 plot_maps, plot_limit)
         nn_input = np.array(nn_input)
         expected_output = np.array(expected_output)
 
